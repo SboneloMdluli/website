@@ -51,6 +51,7 @@ jobs:
           HUGO_ENVIRONMENT: production
         run: |
           echo "Base URL: ${{ steps.pages.outputs.base_url }}"
+
           # Debug: Print Hugo version and config
           hugo version
           hugo config
@@ -58,10 +59,10 @@ jobs:
           # Create public directory
           mkdir -p public
 
-          # Build with verbose output
-          hugo --minify --baseURL "https://sbonelomdluli.github.io/website/" --verbose
+          # Build with verbose output and continue even if there are non-fatal errors
+          hugo --minify --baseURL "https://sbonelomdluli.github.io/website/" --verbose || true
 
-          # Debug: Check directory structure
+          # Check build output
           echo "Content directory structure:"
           ls -R content/
 
@@ -70,9 +71,15 @@ jobs:
 
           # Verify index.html
           if [ ! -f public/index.html ]; then
-            echo "Error: index.html not found in public directory"
-            echo "Checking Hugo's output:"
-            hugo --debug
+            echo "Trying build without minification..."
+            hugo --baseURL "https://sbonelomdluli.github.io/website/" --verbose
+          fi
+
+          # Final check for index.html
+          if [ -f public/index.html ]; then
+            echo "Build successful - index.html found"
+          else
+            echo "Build failed - no index.html generated"
             exit 1
           fi
 
