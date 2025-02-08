@@ -51,10 +51,13 @@ jobs:
           HUGO_ENVIRONMENT: production
           HUGO_ENV: production
         run: |
-          hugo \
-            --gc \
-            --minify \
-            --baseURL "${{ steps.pages.outputs.base_url }}/"
+          echo "Building site for: ${{ steps.pages.outputs.base_url }}"
+          hugo --minify --baseURL "https://sbonelomdluli.github.io/site/"
+          ls -la public/  # Debug: check contents
+          if [ ! -f "public/index.html" ]; then
+            echo "Error: index.html not found!"
+            exit 1
+          fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
