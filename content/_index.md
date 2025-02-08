@@ -45,4 +45,6 @@ social:
     link: https://www.linkedin.com/in/sbonelo-mdluli
 
 highlight_name: true
+
+type: widget_page
 ---
