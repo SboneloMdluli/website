@@ -2,32 +2,24 @@
 name: Deploy Hugo site to Pages
 
 on:
-  # Runs on pushes targeting the default branch
   push:
     branches: ["master"]
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
-# Default to bash
 defaults:
   run:
     shell: bash
 
 jobs:
-  # Build job
   build:
     runs-on: ubuntu-latest
     env:
@@ -48,20 +40,43 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Install Node.js dependencies
         run: "[[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true"
+
+      # Debug: Check repo contents
+      - name: List repo contents
+        run: ls -la
+
       - name: Build with Hugo
         env:
           HUGO_CACHEDIR: ${{ runner.temp }}/hugo_cache
           HUGO_ENVIRONMENT: production
         run: |
-          hugo \
-            --minify \
-            --baseURL "${{ steps.pages.outputs.base_url }}/"
+          echo "Base URL: ${{ steps.pages.outputs.base_url }}"
+          # Create public directory and ensure index.html exists
+          mkdir -p public
+          hugo --minify --baseURL "https://sbonelomdluli.github.io/site/"
+          # Verify the build output
+          ls -la public/
+          if [ ! -f public/index.html ]; then
+            echo "Error: index.html not found in public directory"
+            exit 1
+          fi
+
+      # Debug: Check if the public directory was created
+      - name: Debug public directory
+        run: |
+          echo "Checking if 'public' directory exists..."
+          ls -la ./public || echo "Public directory is missing!"
+
+      # Ensure the public directory exists before uploading
+      - name: Ensure public directory exists
+        run: mkdir -p ./public
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./public
+          path: public
+          name: github-pages
 
-  # Deployment job
   deploy:
     environment:
       name: github-pages
