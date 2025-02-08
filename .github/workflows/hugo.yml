@@ -53,13 +53,39 @@ jobs:
           HUGO_CACHEDIR: ${{ runner.temp }}/hugo_cache
           HUGO_ENVIRONMENT: production
         run: |
-          hugo \
-            --minify \
-            --baseURL "${{ steps.pages.outputs.base_url }}/"
+          echo "Base URL: ${{ steps.pages.outputs.base_url }}"
+
+          # Ensure clean public directory
+          rm -rf public
+          mkdir -p public
+
+          # Build site
+          hugo --minify --baseURL "https://sbonelomdluli.github.io/site/" --destination public
+
+          # Verify build output
+          echo "Public directory contents:"
+          ls -la public/
+
+          # Check if public directory has content
+          if [ -z "$(ls -A public)" ]; then
+            echo "Error: Public directory is empty"
+            exit 1
+          fi
+
+      - name: Verify public directory
+        run: |
+          if [ ! -d "public" ]; then
+            echo "Creating public directory"
+            mkdir -p public
+          fi
+          echo "Public directory contents:"
+          ls -la public/
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./public
+          path: public  # Remove the ./ prefix
+          name: github-pages
 
   # Deployment job
   deploy:
